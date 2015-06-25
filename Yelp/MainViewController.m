@@ -23,6 +23,8 @@ NSString * const kYelpTokenSecret = @"mqtKIxMIR4iBtBPZCmCLEb-Dz3Y";
 @property (nonatomic, strong) YelpClient *client;
 @property (nonatomic, strong) NSArray *businesses;
 @property (nonatomic, strong) UISearchBar *searchBar;
+@property (nonatomic, strong) NSString *searchText;
+@property (nonatomic, strong) NSMutableArray *filteredBusinesses;
 
 -(void)fetchBusinessWithQuery:(NSString *)query params:(NSDictionary *)params;
 @end
@@ -48,13 +50,14 @@ NSString * const kYelpTokenSecret = @"mqtKIxMIR4iBtBPZCmCLEb-Dz3Y";
     
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
-    self.searchBar.delegate = self;
     
     [self.tableView registerNib:[UINib nibWithNibName:@"BusinessCell" bundle:nil] forCellReuseIdentifier:@"BusinessCell"];
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Filter" style:UIBarButtonItemStylePlain target:self action:@selector(onFilterButton)];
-     self.searchBar = [[UISearchBar alloc] init];
+    self.searchBar = [[UISearchBar alloc] init];
+    self.searchBar.delegate = self;
     [self.searchBar sizeToFit];
     self.navigationItem.titleView = self.searchBar;
+    [self.tableView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self.searchBar action:@selector(resignFirstResponder)]];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -73,12 +76,12 @@ NSString * const kYelpTokenSecret = @"mqtKIxMIR4iBtBPZCmCLEb-Dz3Y";
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return self.businesses.count;
+    return self.filteredBusinesses.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     BusinessCell *cell = [tableView dequeueReusableCellWithIdentifier:@"BusinessCell"];
-    cell.business = self.businesses[indexPath.row];
+    cell.business = self.filteredBusinesses[indexPath.row];
     return cell;
 }
 
@@ -99,6 +102,7 @@ NSString * const kYelpTokenSecret = @"mqtKIxMIR4iBtBPZCmCLEb-Dz3Y";
 //        NSLog(@"response: %@", response);
         NSArray *businessDictionares = response[@"businesses"];
         self.businesses = [Business businessWithDictionaries:businessDictionares];
+        self.filteredBusinesses = self.businesses;
         [self.tableView reloadData];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"error: %@", [error description]);
@@ -106,7 +110,30 @@ NSString * const kYelpTokenSecret = @"mqtKIxMIR4iBtBPZCmCLEb-Dz3Y";
 
 }
 
-//- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
-//    searchBar.text
-//}
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
+    self.searchText = searchBar.text;
+    self.filteredBusinesses = [NSMutableArray array];
+    for (Business *business in self.businesses) {
+        if ([business.name containsString:searchBar.text]) {
+            [self.filteredBusinesses addObject:business];
+        }
+    }
+    [self.tableView reloadData];
+    [searchBar resignFirstResponder];
+}
+
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
+    
+    if([searchText isEqualToString:@""] || searchText == nil) {
+        self.filteredBusinesses = self.businesses;
+        [self.tableView reloadData];
+    }
+}
+
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
+    self.filteredBusinesses = self.businesses;
+    [searchBar resignFirstResponder];
+    [self.tableView reloadData];
+    NSLog(@"cancel");
+}
 @end
