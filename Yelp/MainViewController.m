@@ -56,6 +56,7 @@ NSString * const kYelpTokenSecret = @"mqtKIxMIR4iBtBPZCmCLEb-Dz3Y";
     self.searchBar = [[UISearchBar alloc] init];
     self.searchBar.delegate = self;
     [self.searchBar sizeToFit];
+    self.searchBar.showsCancelButton = YES;
     self.navigationItem.titleView = self.searchBar;
     [self.tableView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self.searchBar action:@selector(resignFirstResponder)]];
 }
@@ -134,6 +135,5 @@ NSString * const kYelpTokenSecret = @"mqtKIxMIR4iBtBPZCmCLEb-Dz3Y";
     self.filteredBusinesses = self.businesses;
     [searchBar resignFirstResponder];
     [self.tableView reloadData];
-    NSLog(@"cancel");
 }
 @end
